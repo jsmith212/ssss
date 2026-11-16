@@ -12,6 +12,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"ssss/internal/fsx"
 	"ssss/internal/library"
 	"ssss/internal/model"
 )
@@ -238,7 +239,7 @@ func (e *Engine) walkSamples(ctx context.Context) (present map[string]struct{}, 
 			}
 			return nil
 		}
-		if !d.Type().IsRegular() {
+		if !fsx.IsFile(d.Type()) {
 			return nil
 		}
 		info, ierr := d.Info()

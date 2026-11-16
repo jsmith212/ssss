@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"ssss/internal/audio"
+	"ssss/internal/fsx"
 	"ssss/internal/library"
 )
 
@@ -109,7 +110,7 @@ func PlanPaths(paths []string) Planner {
 					continue
 				}
 				plan.Groups = append(plan.Groups, Group{Name: name, Source: library.SourceImport, Files: files})
-			case !info.Mode().IsRegular():
+			case !fsx.IsFile(info.Mode()):
 				plan.Skipped = append(plan.Skipped, name+": not a file")
 			default:
 				if _, ok := IsAudio(p); !ok {
@@ -156,10 +157,10 @@ func walkAudio(ctx context.Context, root string) (files []File, links int, err e
 			case target.IsDir():
 				links++
 				return nil
-			case !target.Mode().IsRegular():
+			case !fsx.IsFile(target.Mode()):
 				return nil
 			}
-		} else if !d.Type().IsRegular() {
+		} else if !fsx.IsFile(d.Type()) {
 			return nil
 		}
 		if _, ok := IsAudio(p); !ok {

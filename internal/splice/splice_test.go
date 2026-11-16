@@ -2,6 +2,7 @@ package splice
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -263,4 +264,85 @@ func TestLocate(t *testing.T) {
 	if dir, ok := Locate(filepath.Join(override, "gone")); !ok || dir != want {
 		t.Errorf("Locate with a stale override = %q, %v", dir, ok)
 	}
+}
+
+func TestScanLayouts(t *testing.T) {
+	write := func(root string, files ...string) {
+		t.Helper()
+		for _, rel := range files {
+			path := filepath.Join(root, filepath.FromSlash(rel))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte("x"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	names := func(tree *Tree) []string {
+		var out []string
+		for _, p := range tree.Packs {
+			out = append(out, fmt.Sprintf("%s:%d", p.Name, len(p.Files)))
+		}
+		return out
+	}
+
+	t.Run("audio directly in the chosen folder", func(t *testing.T) {
+		root := filepath.Join(t.TempDir(), "My Downloads")
+		write(root, "kick.wav", "snare.WAV", "notes.txt", "Pack A/hat.wav")
+		tree, err := Scan(root, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := names(tree), []string{"My Downloads:2", "Pack A:1"}; !reflect.DeepEqual(got, want) {
+			t.Errorf("packs = %v, want %v", got, want)
+		}
+		if rel := tree.Packs[0].Files[0].Rel; rel != "kick.wav" {
+			t.Errorf("loose file rel = %q", rel)
+		}
+	})
+
+	t.Run("folder names in another case", func(t *testing.T) {
+		root := filepath.Join(t.TempDir(), "Splice")
+		write(root, "Sounds/Packs/Pack A/Drums/kick.wav", "Sounds/Presets/lead.fxp")
+		tree, err := Scan(root, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := names(tree), []string{"Pack A:1"}; !reflect.DeepEqual(got, want) {
+			t.Errorf("packs = %v, want %v", got, want)
+		}
+	})
+
+	t.Run("Samples/packs", func(t *testing.T) {
+		root := filepath.Join(t.TempDir(), "Splice")
+		write(root, "Samples/packs/Pack A/kick.wav", "Samples/packs/Pack B/Loops/loop.aif")
+		tree, err := Scan(root, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := names(tree), []string{"Pack A:1", "Pack B:1"}; !reflect.DeepEqual(got, want) {
+			t.Errorf("packs = %v, want %v", got, want)
+		}
+	})
+
+	t.Run("linked files and folders", func(t *testing.T) {
+		dir := t.TempDir()
+		root := filepath.Join(dir, "Splice")
+		write(dir, "elsewhere/Pack L/kick.wav", "elsewhere/one.wav")
+		write(root, "packs/Pack A/hat.wav")
+		if err := os.Symlink(filepath.Join(dir, "elsewhere", "Pack L"), filepath.Join(root, "packs", "Pack L")); err != nil {
+			t.Skip("no symlinks here:", err)
+		}
+		if err := os.Symlink(filepath.Join(dir, "elsewhere", "one.wav"), filepath.Join(root, "packs", "Pack A", "linked.wav")); err != nil {
+			t.Fatal(err)
+		}
+		tree, err := Scan(root, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := names(tree), []string{"Pack A:2", "Pack L:1"}; !reflect.DeepEqual(got, want) {
+			t.Errorf("packs = %v, want %v", got, want)
+		}
+	})
 }
