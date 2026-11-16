@@ -19,11 +19,26 @@ const (
 	bigPacks   = 250
 
 	// The targets are 30 ms for a page and 80 ms for the sidebar; the
-	// asserted bounds are several times that so a loaded CI machine does
-	// not flake, while a query plan gone quadratic still fails.
-	pageBound    = 150 * time.Millisecond
-	sidebarBound = 400 * time.Millisecond
+	// asserted bounds are several times that so a busy machine does not
+	// flake, while a query plan gone quadratic still fails.
+	localPageBound    = 150 * time.Millisecond
+	localSidebarBound = 400 * time.Millisecond
+
+	// Hosted CI runners are shared and several times slower than a desktop:
+	// a macOS runner took 160 ms for the heaviest search. The timings are
+	// still logged there; only a gross regression fails the build.
+	ciSlack = 4
 )
+
+var pageBound, sidebarBound = bounds()
+
+func bounds() (page, sidebar time.Duration) {
+	page, sidebar = localPageBound, localSidebarBound
+	if os.Getenv("CI") != "" {
+		page, sidebar = ciSlack*page, ciSlack*sidebar
+	}
+	return page, sidebar
+}
 
 var big struct {
 	once sync.Once
