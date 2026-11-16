@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=ssss
+GenericName=Sample Manager
+Comment=Super Simple Sample Station
+Exec=ssss
+Icon=com.ssss.app
+Categories=AudioVideo;Audio;
+Keywords=samples;audio;music;loops;
+Terminal=false
+StartupNotify=true

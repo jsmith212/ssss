@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  WAILS_VERSION: v3.1.0 # keep in step with go.mod and frontend/package.json
+  NODE_VERSION: "24"
+
+jobs:
+  linux:
+    name: Linux checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Build the toolchain image
+        uses: docker/build-push-action@v7
+        with:
+          context: build/ci
+          tags: ssss-ci
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Go (gofmt, vet, tests, Windows cross-build)
+        run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/src ssss-ci build/ci/check.sh go
+      - name: Frontend (check, tests, build, smoke)
+        run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/src ssss-ci build/ci/check.sh frontend
+      # Real-time audio measurements are timing-sensitive on shared runners,
+      # so a failure here is reported without failing the job.
+      - name: Audio engine end-to-end (informational)
+        continue-on-error: true
+        run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/src ssss-ci build/ci/check.sh audio
+
+  desktop:
+    name: Build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: macOS, os: macos-latest }
+          - { name: Windows, os: windows-latest }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install the Wails CLI
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
+      - name: Build
+        run: wails3 build
+      - name: go vet
+        run: go vet ./...
+      - name: go test
+        run: go test -count=1 ./...
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ssss-${{ matrix.name }}
+          path: bin/
+          if-no-files-found: error
+
+  flatpak:
+    name: Flatpak
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v7
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: ssss.flatpak
+          manifest-path: build/flatpak/com.ssss.app.yml

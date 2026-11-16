@@ -1,0 +1,335 @@
+/* Design tokens and base styles. Components use the custom properties below
+   and never hard-code colours, radii or durations. */
+
+:root {
+  color-scheme: dark;
+
+  --bg-0: #111113; /* list / window */
+  --bg-1: #18181b; /* sidebar / player */
+  --bg-2: #222226; /* hover / popover */
+  --bg-3: #2c2c31; /* selected */
+  --border: #2a2a2e;
+  --text-1: #ededef;
+  --text-2: #a0a0a8;
+  --text-3: #6b6b73;
+  --accent: #ff6b2c;
+  --accent-subtle: #3a2414;
+  /* Accent as a text colour. The same hue, dark enough to read on the light
+     theme's surfaces; --accent stays for fills, bars and rings. */
+  --accent-text: #ff6b2c;
+  --success: #3dd68c;
+  --warning: #f5b83d;
+  --danger: #f2555a;
+  /* Text on an accent-filled control (primary button). */
+  --on-accent: #111113;
+  --shadow-popover: 0 8px 28px rgb(0 0 0 / 0.5), 0 0 0 1px var(--border);
+
+  --font: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+  --text-body: 13px;
+  --text-meta: 12px;
+  --text-label: 11px;
+  --text-omnibar: 15px;
+
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 24px;
+  --space-7: 32px;
+
+  --radius-chip: 4px;
+  --radius-control: 6px;
+  --radius-popover: 10px;
+
+  --row-height: 32px;
+  --omnibar-height: 44px;
+  --player-height: 72px;
+  --sidebar-width: 220px;
+  --sidebar-footer-height: 36px;
+
+  /* Selection, playback and list updates are instant; only hover, popovers
+     and the sidebar animate. */
+  --dur-fast: 120ms;
+  --dur-sidebar: 180ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  --z-popover: 100;
+  --z-overlay: 200;
+  --z-toast: 300;
+}
+
+/* Light values, applied when the system is light (unless the user forces
+   dark) and when the user forces light. Keep the two blocks identical. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg-0: #ffffff;
+    --bg-1: #f7f7f8;
+    --bg-2: #efeff1;
+    --bg-3: #e4e4e8;
+    --border: #e2e2e6;
+    --text-1: #17171a;
+    --text-2: #5e5e66;
+    --text-3: #9a9aa2;
+    --accent: #e8530e;
+    --accent-subtle: #ffe9d9;
+    --accent-text: #b8400a;
+    --success: #1a9e5c;
+    --warning: #8f5f00;
+    --danger: #d1343a;
+    --shadow-popover: 0 8px 28px rgb(0 0 0 / 0.14), 0 0 0 1px var(--border);
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg-0: #ffffff;
+  --bg-1: #f7f7f8;
+  --bg-2: #efeff1;
+  --bg-3: #e4e4e8;
+  --border: #e2e2e6;
+  --text-1: #17171a;
+  --text-2: #5e5e66;
+  --text-3: #9a9aa2;
+  --accent: #e8530e;
+  --accent-subtle: #ffe9d9;
+  --accent-text: #b8400a;
+  --success: #1a9e5c;
+  --warning: #8f5f00;
+  --danger: #d1343a;
+  --shadow-popover: 0 8px 28px rgb(0 0 0 / 0.14), 0 0 0 1px var(--border);
+}
+
+:root[data-density="compact"] {
+  --row-height: 28px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-sidebar: 0ms;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: var(--bg-0);
+  color: var(--text-1);
+  font: 400 var(--text-body) / 1.4 var(--font);
+  font-feature-settings: "cv11", "ss03";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* A desktop app, not a document: text is selectable only where it helps. */
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+  overscroll-behavior: none;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+h1,
+h2,
+h3 {
+  font-size: inherit;
+  font-weight: 600;
+}
+
+button,
+input,
+select,
+textarea {
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+button {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: default;
+}
+
+input,
+textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-3);
+}
+
+a {
+  color: inherit;
+}
+
+img,
+svg,
+canvas {
+  display: block;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: var(--radius-control);
+}
+
+::selection {
+  background: var(--accent-subtle);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-3) transparent;
+}
+
+/* Shared building blocks. */
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.section-label {
+  color: var(--text-3);
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectable {
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--text-2);
+  stroke-width: 1.5;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 28px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--bg-2);
+  color: var(--text-1);
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.btn:hover {
+  background: var(--bg-3);
+}
+
+.btn:disabled {
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 500;
+}
+
+.btn-primary:hover {
+  background: color-mix(in srgb, var(--accent) 88%, white);
+}
+
+.btn-ghost {
+  background: none;
+  color: var(--text-2);
+}
+
+.btn-ghost:hover {
+  background: var(--bg-2);
+  color: var(--text-1);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-chip);
+  background: var(--bg-2);
+  color: var(--text-2);
+  font-size: var(--text-meta);
+  white-space: nowrap;
+}
+
+.popover {
+  border-radius: var(--radius-popover);
+  background: var(--bg-2);
+  box-shadow: var(--shadow-popover);
+}
+
+/* Wails adds this class to a [data-file-drop-target] element while an OS
+   file drag hovers it. While our own samples are being dragged out
+   (data-self-drag, set by DropOverlay) a pack takes no drop, so it gets no
+   tint. */
+:where(:root:not([data-self-drag])) .file-drop-target-active,
+.file-drop-target-active:where(:not([data-drop-kind="pack"])) {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: var(--radius-control);
+  background: var(--accent-subtle);
+}

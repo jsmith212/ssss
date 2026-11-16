@@ -1,0 +1,19 @@
+# build output
+/bin/
+/build/bin/
+/frontend/dist/*
+!/frontend/dist/.gitkeep
+/frontend/node_modules/
+node_modules/
+.task/
+.flatpak-builder/
+*.exe
+*.syso
+*.test
+*.out
+
+# editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp

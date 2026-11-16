@@ -1,0 +1,61 @@
+# Flatpak build of ssss. The GNOME runtime supplies GTK 4, WebKitGTK 6.0,
+# the GSettings schemas and GStreamer, so nothing else needs installing.
+#
+# Build and install for the current user, from the repository root:
+#
+#   flatpak run org.flatpak.Builder --user --install --force-clean \
+#     bin/flatpak-build build/flatpak/com.ssss.app.yml
+#   flatpak run com.ssss.app
+app-id: com.ssss.app
+runtime: org.gnome.Platform
+runtime-version: '51'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.golang
+  - org.freedesktop.Sdk.Extension.node24
+command: ssss
+
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --socket=pulseaudio
+  - --device=dri
+  # The library lives wherever the user keeps it (often a synced folder),
+  # samples are imported from anywhere, and files dragged out to a DAW must
+  # keep the paths the DAW can open.
+  - --filesystem=home
+
+build-options:
+  append-path: /usr/lib/sdk/golang/bin:/usr/lib/sdk/node24/bin
+  # Go modules and npm packages are downloaded during the build. A Flathub
+  # submission would need them vendored as sources instead.
+  build-args:
+    - --share=network
+  env:
+    GOROOT: /usr/lib/sdk/golang
+    GOTOOLCHAIN: local
+    GOFLAGS: -modcacherw
+    GOPATH: /run/build/ssss/.gopath
+    GOCACHE: /run/build/ssss/.gocache
+    npm_config_cache: /run/build/ssss/.npm
+
+modules:
+  - name: ssss
+    buildsystem: simple
+    build-commands:
+      - npm --prefix frontend ci
+      - npm --prefix frontend run build
+      - go build -tags production -trimpath -buildvcs=false -ldflags="-w -s" -o ssss .
+      - install -Dm755 ssss /app/bin/ssss
+      - install -Dm644 build/flatpak/com.ssss.app.desktop /app/share/applications/com.ssss.app.desktop
+      - install -Dm644 build/flatpak/icon-512.png /app/share/icons/hicolor/512x512/apps/com.ssss.app.png
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - .git
+          - .task
+          - .flatpak-builder
+          - bin
+          - frontend/node_modules

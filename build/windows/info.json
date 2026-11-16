@@ -1,0 +1,17 @@
+{
+	"fixed": {
+		"file_version": "0.0.1",
+		"product_version": "0.0.1"
+	},
+	"info": {
+		"0409": {
+			"FileVersion": "0.0.1",
+			"ProductVersion": "0.0.1",
+			"CompanyName": "ssss",
+			"FileDescription": "Sample manager",
+			"LegalCopyright": "(c) 2026 ssss contributors",
+			"ProductName": "ssss",
+			"Comments": "Sample manager"
+		}
+	}
+}
