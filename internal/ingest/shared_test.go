@@ -290,7 +290,7 @@ func TestRescanNoticesFileEditedInPlace(t *testing.T) {
 	f.lib.Close()
 	f.idx.Close()
 	again := open(t, root, cache, 0)
-	defer again.eng.Close()
+	defer again.close()
 	if res := again.rescan(RescanOptions{Quiet: true}); res != (RescanResult{}) {
 		t.Errorf("rescan in the next session = %+v", res)
 	}

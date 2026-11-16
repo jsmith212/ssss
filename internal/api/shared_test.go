@@ -3,6 +3,7 @@ package api
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -114,8 +115,8 @@ func TestDamagedIndexIsRebuilt(t *testing.T) {
 }
 
 func TestUnwritableCacheDoesNotHideTheLibrary(t *testing.T) {
-	if os.Getuid() == 0 {
-		t.Skip("root ignores directory permissions")
+	if runtime.GOOS == "windows" || os.Getuid() == 0 {
+		t.Skip("needs a folder made unwritable by its mode: Windows and root ignore it")
 	}
 	home := t.TempDir()
 	a, _ := librarySetUp(t, home)

@@ -77,12 +77,25 @@ jobs:
   flatpak:
     name: Flatpak
     runs-on: ubuntu-24.04
-    container:
-      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
-      options: --privileged
     steps:
       - uses: actions/checkout@v7
-      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+      # Ubuntu's own flatpak-builder, not flatpak/flatpak-github-actions: its
+      # container fails to update the preinstalled SDK ("Invalid cross-device
+      # link", then a crash; flatpak/flatpak-github-actions#267).
+      - name: Install flatpak-builder
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+      - name: Build
+        run: |
+          flatpak-builder --user --install-deps-from=flathub --disable-rofiles-fuse \
+            --state-dir="$RUNNER_TEMP/flatpak-state" --repo="$RUNNER_TEMP/flatpak-repo" \
+            --force-clean "$RUNNER_TEMP/flatpak-app" build/flatpak/com.ssss.app.yml
+      - name: Bundle
+        run: flatpak build-bundle "$RUNNER_TEMP/flatpak-repo" ssss.flatpak com.ssss.app
+      - uses: actions/upload-artifact@v7
         with:
-          bundle: ssss.flatpak
-          manifest-path: build/flatpak/com.ssss.app.yml
+          name: ssss-flatpak
+          path: ssss.flatpak
+          if-no-files-found: error

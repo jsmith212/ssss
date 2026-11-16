@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"sync/atomic"
@@ -302,8 +303,8 @@ func TestVanishedRootIsNotRecreated(t *testing.T) {
 }
 
 func TestFailedWriteIsRetriedOnItsOwn(t *testing.T) {
-	if os.Getuid() == 0 {
-		t.Skip("root ignores directory permissions")
+	if runtime.GOOS == "windows" || os.Getuid() == 0 {
+		t.Skip("needs a folder made unwritable by its mode: Windows and root ignore it")
 	}
 	var reports atomic.Int32
 	l := must(Create(filepath.Join(t.TempDir(), "lib"), "Main", Options{
